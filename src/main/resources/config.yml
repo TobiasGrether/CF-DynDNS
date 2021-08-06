@@ -1,0 +1,6 @@
+apiToken: ""
+cfEmail: ""
+zoneId: ""
+dnsRecords:
+  - name: "myendpoint.example.com"
+    type: "A"
