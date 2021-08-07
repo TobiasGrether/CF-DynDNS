@@ -19,7 +19,7 @@ dnsRecords:
 This project uses Cloudflare APIs only. It uses cloudflares cgi tracing endpoint to resolve the current public address and then handles changes accordingly.
 
 ## How to run
-- Build with maven (java 11)
+- Build with maven (java 8)
 - Run on a machine like a server or a Raspberry Pi
 - start once, edit configuration
 - start again

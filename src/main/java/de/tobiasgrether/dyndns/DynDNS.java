@@ -69,20 +69,33 @@ public class DynDNS {
         DNSListResult parsedResult = this.mapper.readValue(result.getBody().toString(), DNSListResult.class);
         if (parsedResult.isSuccess()) {
             for (DNSRecord record : parsedResult.getResult()) {
-                if (this.model.getDnsRecords().contains(new RecordEntry(record.getName(), "")) && !record.getContent().equals(currentIp)) {
-                    record.setContent(currentIp);
-                    HttpResponse<JsonNode> update = Unirest.put("https://api.cloudflare.com/client/v4/zones/" + this.model.getZoneId() + "/dns_records/" + record.getId())
-                            .body(this.mapper.writeValue(record))
-                            .header("X-Auth-Key", this.model.getApiToken())
-                            .header("X-Auth-Email", this.model.getCfEmail())
-                            .asJson();
-                    if (update.getStatus() == 200) {
-                        this.logger.info("DNS Record updated: {} (Record type {}) now has IP {}", record.getName(), record.getType(), currentIp);
+                RecordEntry entry = this.findConfigEntry(record.getName(), record.getType());
+                if(entry != null){
+                    if(!record.getContent().equals(currentIp)){
+                        this.logger.info("Attempting to rewrite dns entry {}", record.getName());
+                        record.setContent(currentIp);
+                        HttpResponse<JsonNode> update = Unirest.put("https://api.cloudflare.com/client/v4/zones/" + this.model.getZoneId() + "/dns_records/" + record.getId())
+                                .body(this.mapper.writeValue(record))
+                                .header("X-Auth-Key", this.model.getApiToken())
+                                .header("X-Auth-Email", this.model.getCfEmail())
+                                .asJson();
+                        if (update.getStatus() == 200) {
+                            this.logger.info("DNS Record updated: {} (Record type {}) now has IP {}", record.getName(), record.getType(), currentIp);
+                        }
                     }
                 }
             }
         }
         this.logger.info("Record rewrite complete, new public ip is " + currentIp);
+    }
+
+    public RecordEntry findConfigEntry(String name, String type){
+        for(RecordEntry record : this.getModel().getDnsRecords()){
+            if(record.compareValues(name, type)){
+                return record;
+            }
+        }
+        return null;
     }
 
     public Logger getLogger() {
